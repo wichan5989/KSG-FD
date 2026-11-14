@@ -1,0 +1,35 @@
+name: Build Feedback Killer APK
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'feedback-killer-v0.4-restructured.zip'
+      - '.github/workflows/android-apk.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;27.2.12479018"
+      - name: Extract source
+        run: unzip -q feedback-killer-v0.4-restructured.zip
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build Debug APK
+        working-directory: feedback-killer/android
+        run: gradle --no-daemon assembleDebug --stacktrace
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KSG-FD-debug-apk
+          path: feedback-killer/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
